@@ -1,0 +1,27 @@
+services:
+  server:
+    environment:
+      - MONGODB_URI=mongodb://root:example@mongodb:27017
+      - DATABASE_NAME=trading-view
+      - PORT=3000
+      - HOST=0.0.0.0
+      - NODE_ENV=local
+      - LOG_LEVEL=info
+      - BINANCE_PRICING_API=https://api.binance.com/api/v3/ticker/price
+      - SPREAD_PERCENTAGE=5
+    build:
+      context: ./
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongodb
+
+  mongodb:
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=example
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./db:/data/db

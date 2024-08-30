@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TradingView</title>
+    <style>
+      * {
+        margin: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+
+      .view {
+        overflow: auto;
+        width: 100%;
+        display: flex;
+        margin: 20px;
+      }
+
+      .view table {
+        border: 1px solid #dededf;
+        table-layout: auto;
+        border-collapse: separate;
+        border-spacing: 1px;
+        text-align: center;
+      }
+
+      .view .prices {
+        width: 70%;
+      }
+
+      .view .favorites {
+        width: 15%;
+        margin-left: 100px;
+      }
+
+      .view caption {
+        caption-side: top;
+        text-align: left;
+      }
+
+      .view th {
+        border: 1px solid #dededf;
+        background-color: #eceff1;
+        color: #000000;
+        padding: 5px;
+      }
+
+      .view td {
+        border: 1px solid #dededf;
+        background-color: #ffffff;
+        color: #000000;
+        padding: 5px;
+      }
+
+      .symbol-button {
+        width: 150px;
+        text-wrap: wrap;
+      }
+
+      .symbol-button.favorite {
+        background-color: chocolate;
+        border: none;
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="view">
+      <table class="prices" id="pricesTable">
+        <caption>
+          TradingView
+        </caption>
+        <thead>
+          <tr>
+            <th>Symbol</th>
+            <th>Ask Price</th>
+            <th>Bid Price</th>
+          </tr>
+        </thead>
+      </table>
+      <div class="favorites">
+        <h3>Favorite symbols</h3>
+        <ul id="favoritesList"></ul>
+      </div>
+    </div>
+    <script type="text/javascript">
+      const pricesTable = document.getElementById("pricesTable");
+      const favoritesList = document.getElementById("favoritesList");
+
+      function triggerDataUpdate() {
+        fetch("assets/prices")
+          .then((res) => {
+            res
+              .json()
+              .then((assets) => {
+                // Reset favorites list and prices table
+                favoritesList.innerHTML = "";
+                pricesTable.innerHTML =
+                  "<caption>TradingView</caption><thead><tr><th>Symbol</th><th>AskPrice</th><th>BidPrice</th></tr></thead>";
+                assets.forEach((asset, index) => {
+                  const row = pricesTable.insertRow(index + 1);
+                  const symbol = row.insertCell(0);
+                  const askPrice = row.insertCell(1);
+                  const bidPrice = row.insertCell(2);
+
+                  if (asset.isFavorite) {
+                    const favorite = document.createElement("li");
+                    favorite.innerHTML = asset.symbol;
+                    favoritesList.appendChild(favorite);
+                  }
+
+                  symbol.innerHTML = `<button onclick="addSymbolToFavorites('${asset.symbol}')" class="symbol-button${asset.isFavorite ? " favorite" : ""}" title="Add to favorites">${asset.symbol}</button>`;
+                  askPrice.innerHTML = asset.askPrice.toFixed(4);
+                  bidPrice.innerHTML = asset.bidPrice.toFixed(4);
+                });
+              })
+              .catch((err) => {
+                console.error(err);
+                alert("Failed to parse response");
+              });
+          })
+          .catch((err) => {
+            console.error(err);
+            alert("Failed to fetch data");
+          });
+      }
+
+      async function addSymbolToFavorites(symbol) {
+        const response = await fetch(`assets/favorite-symbols`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ symbol }),
+        });
+
+        if (response.ok) {
+          triggerDataUpdate();
+        } else {
+          alert("Failed to add symbol to favorites");
+        }
+      }
+
+      triggerDataUpdate();
+    </script>
+  </body>
+</html>
